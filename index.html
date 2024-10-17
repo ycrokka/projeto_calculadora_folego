@@ -7,38 +7,48 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #333;
+            background-color: #000;
             color: #f4f4f4;
             margin: 0;
             padding: 20px;
         }
         h1, h2 {
             color: #fff;
+            text-align: center;
+            animation: fadeIn 1s ease-in-out;
         }
         input {
             margin: 5px 0;
             padding: 10px;
             width: calc(50% - 20px);
-            border: 1px solid #ccc;
+            border: 2px solid #444;
             border-radius: 4px;
+            background-color: #111;
+            color: #fff;
+            transition: border-color 0.3s ease;
+        }
+        input:focus {
+            border-color: #28a745;
         }
         button {
             padding: 10px 15px;
-            background-color: #28a745;
+            background-color: #1e7e34;
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             margin-left: 10px;
+            transition: background-color 0.3s ease, transform 0.2s;
         }
         button:hover {
-            background-color: #218838;
+            background-color: #155724;
+            transform: scale(1.05);
         }
         .personagem {
             margin: 10px 0;
             padding: 10px;
-            background-color: #444;
-            border: 1px solid #ddd;
+            background-color: #222;
+            border: 1px solid #333;
             border-radius: 4px;
             display: flex;
             justify-content: space-between;
@@ -46,9 +56,49 @@
         }
         .folego-negativo {
             color: red;
+            animation: blink 1s infinite;
         }
         .folego-positivo {
-            color: green;
+            color: #28a745;
+        }
+        .life-bar-container {
+            width: 200px;
+            background-color: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            height: 20px;
+            margin: 5px 0;
+        }
+        .life-bar {
+            height: 100%;
+            transition: width 0.3s, background-color 0.3s;
+        }
+
+        /* Animações */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+
+        /* Responsividade */
+        @media (max-width: 768px) {
+            input {
+                width: calc(100% - 20px);
+            }
+            .life-bar-container {
+                width: 100px;
+            }
         }
     </style>
 </head>
@@ -72,29 +122,50 @@
             const folegoMaximo = parseInt(document.getElementById('folegoMaximo').value);
 
             if (nome && folegoMaximo > 0) {
-                const personagem = { nome, folegoMaximo, folegoAtual: folegoMaximo }; // Inicializa fôlego atual igual ao máximo
+                const personagem = { nome, folegoMaximo, folegoAtual: folegoMaximo };
                 personagens.push(personagem);
-                atualizarLista();
+                atualizarLista(true); // true para aplicar animação de slideIn ao criar
                 limparCampos();
             } else {
                 alert("Por favor, preencha todos os campos corretamente.");
             }
         }
 
-        function atualizarLista() {
+        function atualizarLista(isNewPersonagem = false) {
             const lista = document.getElementById('personagens');
             lista.innerHTML = '';
             personagens.forEach((personagem, index) => {
                 const div = document.createElement('div');
                 div.className = 'personagem';
+                if (isNewPersonagem) {
+                    div.style.animation = 'slideIn 0.5s ease-in-out'; // Apenas ao criar novo personagem
+                }
 
                 const folegoClass = personagem.folegoAtual < 0 ? 'folego-negativo' : 'folego-positivo';
-                div.innerHTML = `${personagem.nome} - Fôlego: <span class="${folegoClass}">${personagem.folegoAtual}/${personagem.folegoMaximo}</span>
+                const lifeBarColor = getLifeBarColor(personagem);
+                const lifeBarWidth = (personagem.folegoAtual / personagem.folegoMaximo) * 100;
+
+                div.innerHTML = `
+                    ${personagem.nome} - Fôlego: <span class="${folegoClass}">${personagem.folegoAtual}/${personagem.folegoMaximo}</span>
+                    <div class="life-bar-container">
+                        <div class="life-bar" style="width: ${lifeBarWidth}%; background-color: ${lifeBarColor};"></div>
+                    </div>
                     <button onclick="gastarFolego(${index})">Gastar Fôlego</button>
                     <button onclick="recuperarFolegoIndividual(${index})">Recuperar Fôlego</button>
                     <button onclick="removerPersonagem(${index})">Remover</button>`;
                 lista.appendChild(div);
             });
+        }
+
+        function getLifeBarColor(personagem) {
+            const porcentagem = (personagem.folegoAtual / personagem.folegoMaximo) * 100;
+            if (porcentagem < 25) {
+                return 'red'; // Vermelho
+            } else if (porcentagem < 50) {
+                return 'yellow'; // Amarelo
+            } else {
+                return '#1e7e34'; // Verde escuro
+            }
         }
 
         function limparCampos() {
@@ -119,8 +190,6 @@
                 mensagem = `${personagem.nome} está desmaiada! `;
                 if (Math.abs(personagem.folegoAtual) >= 10) {
                     mensagem += 'Lesão grave.';
-                } else if (Math.abs(personagem.folegoAtual) >= 5) {
-                    mensagem += 'Lesão leve.';
                 }
             }
             if (mensagem) {
