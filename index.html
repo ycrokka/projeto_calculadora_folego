@@ -17,10 +17,25 @@
             text-align: center;
             animation: fadeIn 1s ease-in-out;
         }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
         input {
             margin: 5px 0;
             padding: 10px;
-            width: calc(50% - 20px);
+            width: calc(100% - 20px);
+            max-width: 400px;
             border: 2px solid #444;
             border-radius: 4px;
             background-color: #111;
@@ -37,7 +52,7 @@
             border: none;
             border-radius: 4px;
             cursor: pointer;
-            margin-left: 10px;
+            margin: 10px;
             transition: background-color 0.3s ease, transform 0.2s;
         }
         button:hover {
@@ -51,8 +66,22 @@
             border: 1px solid #333;
             border-radius: 4px;
             display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: flex-start;
+            width: 100%;
+        }
+        .personagem-info {
+            display: flex;
             justify-content: space-between;
             align-items: center;
+            width: 100%;
+        }
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
         }
         .folego-negativo {
             color: red;
@@ -62,7 +91,8 @@
             color: #28a745;
         }
         .life-bar-container {
-            width: 200px;
+            width: 100%;
+            max-width: 400px;
             background-color: #333;
             border-radius: 5px;
             overflow: hidden;
@@ -93,8 +123,29 @@
 
         /* Responsividade */
         @media (max-width: 768px) {
+            .container {
+                flex-direction: column;
+            }
             input {
-                width: calc(100% - 20px);
+                width: calc(100% - 40px);
+            }
+            button {
+                width: 100%;
+            }
+            .personagem {
+                flex-direction: column;
+            }
+            .life-bar-container {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1, h2 {
+                font-size: 1.5rem;
+            }
+            button {
+                font-size: 1rem;
             }
             .life-bar-container {
                 width: 100px;
@@ -103,16 +154,18 @@
     </style>
 </head>
 <body>
-    <h1>Calculadora de Fôlego</h1>
-    <div>
-        <input type="text" id="nome" placeholder="Nome do Personagem" required>
-        <input type="number" id="folegoMaximo" placeholder="Fôlego Máximo" required>
-        <button onclick="adicionarPersonagem()">Adicionar Personagem</button>
-    </div>
+    <div class="container">
+        <h1>Calculadora de Fôlego</h1>
+        <div class="input-container">
+            <input type="text" id="nome" placeholder="Nome do Personagem" required>
+            <input type="number" id="folegoMaximo" placeholder="Fôlego Máximo" required>
+            <button onclick="adicionarPersonagem()">Adicionar Personagem</button>
+        </div>
 
-    <h2>Personagens</h2>
-    <div id="personagens"></div>
-    <button onclick="recuperarFolego()">Gol! Recuperar 5 de Fôlego</button>
+        <h2>Personagens</h2>
+        <div id="personagens" class="container"></div>
+        <button onclick="recuperarFolego()">Gol! Recuperar 5 de Fôlego</button>
+    </div>
 
     <script>
         const personagens = [];
@@ -146,13 +199,17 @@
                 const lifeBarWidth = (personagem.folegoAtual / personagem.folegoMaximo) * 100;
 
                 div.innerHTML = `
-                    ${personagem.nome} - Fôlego: <span class="${folegoClass}">${personagem.folegoAtual}/${personagem.folegoMaximo}</span>
+                    <div class="personagem-info">
+                        ${personagem.nome} - Fôlego: <span class="${folegoClass}">${personagem.folegoAtual}/${personagem.folegoMaximo}</span>
+                    </div>
                     <div class="life-bar-container">
                         <div class="life-bar" style="width: ${lifeBarWidth}%; background-color: ${lifeBarColor};"></div>
                     </div>
-                    <button onclick="gastarFolego(${index})">Gastar Fôlego</button>
-                    <button onclick="recuperarFolegoIndividual(${index})">Recuperar Fôlego</button>
-                    <button onclick="removerPersonagem(${index})">Remover</button>`;
+                    <div class="buttons-container">
+                        <button onclick="gastarFolego(${index})">Gastar Fôlego</button>
+                        <button onclick="recuperarFolegoIndividual(${index})">Recuperar Fôlego</button>
+                        <button onclick="removerPersonagem(${index})">Remover</button>
+                    </div>`;
                 lista.appendChild(div);
             });
         }
@@ -189,25 +246,26 @@
             } else if (personagem.folegoAtual < 0) {
                 mensagem = `${personagem.nome} está desmaiada! `;
                 if (Math.abs(personagem.folegoAtual) >= 10) {
-                    mensagem += 'Lesão grave.';
+                    mensagem += 'Lesões graves (-2d)!';
                 }
             }
-            if (mensagem) {
-                alert(mensagem);
-            }
+            alert(mensagem);
 
             atualizarLista();
         }
 
         function recuperarFolegoIndividual(index) {
-            const recuperar = parseInt(prompt("Quanto de fôlego deseja recuperar?"));
-            if (isNaN(recuperar) || recuperar < 0) {
+            const personagem = personagens[index];
+            const recuperacao = parseInt(prompt("Quanto de fôlego deseja recuperar?"));
+            if (isNaN(recuperacao) || recuperacao < 0) {
                 alert("Por favor, insira um valor válido.");
                 return;
             }
 
-            const personagem = personagens[index];
-            personagem.folegoAtual = Math.min(personagem.folegoAtual + recuperar, personagem.folegoMaximo);
+            personagem.folegoAtual += recuperacao;
+            if (personagem.folegoAtual > personagem.folegoMaximo) {
+                personagem.folegoAtual = personagem.folegoMaximo;
+            }
 
             atualizarLista();
         }
@@ -219,7 +277,10 @@
 
         function recuperarFolego() {
             personagens.forEach(personagem => {
-                personagem.folegoAtual = Math.min(personagem.folegoAtual + 5, personagem.folegoMaximo);
+                personagem.folegoAtual += 5;
+                if (personagem.folegoAtual > personagem.folegoMaximo) {
+                    personagem.folegoAtual = personagem.folegoMaximo;
+                }
             });
             atualizarLista();
         }
